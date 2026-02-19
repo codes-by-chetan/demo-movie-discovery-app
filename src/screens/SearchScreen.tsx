@@ -11,7 +11,6 @@ import MovieCard from '../components/MovieCard';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
 import { usePaginatedMovies } from '../hooks/usePaginatedMovies';
 import { searchMovies } from '../services/tmdb-service';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 type Props = {
   onMoviePress: (movieId: number) => void;
@@ -52,7 +51,7 @@ const SearchMoviesScreen = ({onMoviePress}: Props) => {
   }, [debouncedQuery, initialLoading, loadNext, loadingMore]);
 
   return (
-    <SafeAreaProvider style={styles.screen}>
+    <View style={styles.screen}>
       <Text style={styles.header}>Search movies</Text>
       <TextInput
         value={query}
@@ -93,7 +92,7 @@ const SearchMoviesScreen = ({onMoviePress}: Props) => {
 
       {initialLoading ? <ActivityIndicator style={styles.searchLoader} /> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
-    </SafeAreaProvider>
+    </View>
   );
 };
 
