@@ -44,8 +44,10 @@ react {
     // extraPackagerArgs = []
 
     /* Hermes Commands */
-    //   The hermes compiler command to run. By default it is 'hermesc'
-    // hermesCommand = "$rootDir/my-custom-hermesc/bin/hermesc"
+    //   Explicitly set hermesc path for Windows; `%OS-BIN%` is interpreted by cmd as an env var.
+    if (System.properties['os.name'].toLowerCase().contains('windows')) {
+        hermesCommand = "$rootDir/../node_modules/react-native/sdks/hermesc/win64-bin/hermesc.exe"
+    }
     //
     //   The list of flags to pass to the Hermes compiler. By default is "-O", "-output-source-map"
     // hermesFlags = ["-O", "-output-source-map"]
