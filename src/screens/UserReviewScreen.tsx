@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import {
-  Alert,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -11,7 +10,6 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { launchImageLibrary } from 'react-native-image-picker';
 
 type Props = {
@@ -32,7 +30,7 @@ const ProgressBar = ({ progress }: { progress: number }) => {
 };
 
 
-const UserReviewScreen = ({ movieId, movieTitle, onDone }: Props) => {
+const UserReviewScreen = ({ movieId, movieTitle, onDone: _onDone }: Props) => {
   const [author, setAuthor] = useState('');
   const [review, setReview] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
@@ -108,7 +106,7 @@ const UserReviewScreen = ({ movieId, movieTitle, onDone }: Props) => {
 
   return (
 
-    <SafeAreaView style={styles.screen}>
+    <View style={styles.screen}>
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
@@ -170,7 +168,7 @@ const UserReviewScreen = ({ movieId, movieTitle, onDone }: Props) => {
           ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView >
+    </View>
   );
 };
 
