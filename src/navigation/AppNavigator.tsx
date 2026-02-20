@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MovieDetailsScreen from '../screens/MovieDetailsScreen';
@@ -13,11 +13,11 @@ type Route =
 
 type HomeTabsProps = {
   activeTab: 'popular' | 'search';
-  setActiveTab: (tab: 'popular' | 'search') => void;
+  onTabPress: (tab: 'popular' | 'search') => void;
   openMovie: (movieId: number) => void;
 };
 
-const HomeTabs = ({ activeTab, setActiveTab, openMovie }: HomeTabsProps) => {
+const HomeTabs = ({ activeTab, onTabPress, openMovie }: HomeTabsProps) => {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -30,7 +30,7 @@ const HomeTabs = ({ activeTab, setActiveTab, openMovie }: HomeTabsProps) => {
 
       <View style={styles.tabBar}>
         <Pressable
-          onPress={() => setActiveTab('popular')}
+          onPress={() => onTabPress('popular')}
           style={[styles.tab, activeTab === 'popular' && styles.tabActive]}>
           <Text
             style={[styles.tabText, activeTab === 'popular' && styles.tabTextActive]}>
@@ -38,7 +38,7 @@ const HomeTabs = ({ activeTab, setActiveTab, openMovie }: HomeTabsProps) => {
           </Text>
         </Pressable>
         <Pressable
-          onPress={() => setActiveTab('search')}
+          onPress={() => onTabPress('search')}
           style={[styles.tab, activeTab === 'search' && styles.tabActive]}>
           <Text
             style={[styles.tabText, activeTab === 'search' && styles.tabTextActive]}>
@@ -54,28 +54,49 @@ const AppNavigator = () => {
   const insets = useSafeAreaInsets();
   const [history, setHistory] = useState<Route[]>([{ name: 'Home' }]);
   const [activeTab, setActiveTab] = useState<'popular' | 'search'>('popular');
+  const [tabHistory, setTabHistory] = useState<Array<'popular' | 'search'>>([]);
+  const lastUiNavActionAt = useRef(0);
 
   const currentRoute = history[history.length - 1];
   const safeBottomInset = Math.max(insets.bottom, 12);
 
   const goBack = useCallback(() => {
+    lastUiNavActionAt.current = Date.now();
     setHistory(current => (current.length > 1 ? current.slice(0, -1) : current));
+  }, []);
+
+  const handleTabPress = useCallback((tab: 'popular' | 'search') => {
+    setActiveTab(current => {
+      if (current === tab) {
+        return current;
+      }
+
+      lastUiNavActionAt.current = Date.now();
+      setTabHistory(existing => [...existing, current]);
+      return tab;
+    });
   }, []);
 
 
   const handleHardwareBack = useCallback(() => {
+    if (Date.now() - lastUiNavActionAt.current < 350) {
+      return true;
+    }
+
     if (currentRoute.name !== 'Home') {
       goBack();
       return true;
     }
 
-    if (activeTab !== 'popular') {
-      setActiveTab('popular');
+    if (tabHistory.length > 0) {
+      const previousTab = tabHistory[tabHistory.length - 1];
+      setTabHistory(current => current.slice(0, -1));
+      setActiveTab(previousTab);
       return true;
     }
 
     return false;
-  }, [activeTab, currentRoute.name, goBack]);
+  }, [currentRoute.name, goBack, tabHistory]);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', handleHardwareBack);
@@ -126,7 +147,7 @@ const AppNavigator = () => {
         {currentRoute.name === 'Home' ? (
           <HomeTabs
             activeTab={activeTab}
-            setActiveTab={setActiveTab}
+            onTabPress={handleTabPress}
             openMovie={openMovie}
           />
         ) : null}
