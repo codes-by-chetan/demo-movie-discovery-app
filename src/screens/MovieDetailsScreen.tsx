@@ -11,7 +11,6 @@ import {
 } from 'react-native';
 import { CastMember, MovieDetails, Review } from '../types/movie';
 import { fetchMovieDetailsBundle, fetchMovieReviews, imageUrl } from '../services/tmdb-service';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import ReviewItem from '../components/ReviewItem';
 
 type Props = {
@@ -102,7 +101,7 @@ const MovieDetailsScreen = ({ movieId, onWriteReview }: Props) => {
   }
 
   return (
-    <SafeAreaProvider style={styles.screen}>
+    <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content}>
         <Image
           source={details.backdrop_path ? { uri: imageUrl(details.backdrop_path) } : undefined}
@@ -168,7 +167,7 @@ const MovieDetailsScreen = ({ movieId, onWriteReview }: Props) => {
 
         {error ? <Text style={styles.error}>{error}</Text> : null}
       </ScrollView>
-    </SafeAreaProvider>
+    </View>
   );
 };
 

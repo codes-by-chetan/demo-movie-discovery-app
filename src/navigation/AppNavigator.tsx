@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MovieDetailsScreen from '../screens/MovieDetailsScreen';
 import HomeScreen from '../screens/HomeScreen';
 import SearchScreen from '../screens/SearchScreen';
@@ -11,12 +12,12 @@ type Route =
   | { name: 'PostReview'; movieId: number; movieTitle: string };
 
 type HomeTabsProps = {
+  activeTab: 'popular' | 'search';
+  setActiveTab: (tab: 'popular' | 'search') => void;
   openMovie: (movieId: number) => void;
 };
 
-const HomeTabs = ({ openMovie }: HomeTabsProps) => {
-  const [activeTab, setActiveTab] = useState<'popular' | 'search'>('popular');
-
+const HomeTabs = ({ activeTab, setActiveTab, openMovie }: HomeTabsProps) => {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -50,13 +51,37 @@ const HomeTabs = ({ openMovie }: HomeTabsProps) => {
 };
 
 const AppNavigator = () => {
+  const insets = useSafeAreaInsets();
   const [history, setHistory] = useState<Route[]>([{ name: 'Home' }]);
+  const [activeTab, setActiveTab] = useState<'popular' | 'search'>('popular');
 
   const currentRoute = history[history.length - 1];
+  const safeBottomInset = Math.max(insets.bottom, 12);
 
-  const goBack = () => {
+  const goBack = useCallback(() => {
     setHistory(current => (current.length > 1 ? current.slice(0, -1) : current));
-  };
+  }, []);
+
+
+  const handleHardwareBack = useCallback(() => {
+    if (currentRoute.name !== 'Home') {
+      goBack();
+      return true;
+    }
+
+    if (activeTab !== 'popular') {
+      setActiveTab('popular');
+      return true;
+    }
+
+    return false;
+  }, [activeTab, currentRoute.name, goBack]);
+
+  useEffect(() => {
+    const subscription = BackHandler.addEventListener('hardwareBackPress', handleHardwareBack);
+
+    return () => subscription.remove();
+  }, [handleHardwareBack]);
 
   const openMovie = (movieId: number) => {
     setHistory(current => [...current, { name: 'MovieDetails', movieId }]);
@@ -77,7 +102,16 @@ const AppNavigator = () => {
   }, [currentRoute.name]);
 
   return (
-    <View style={styles.root}>
+    <View
+      style={[
+        styles.root,
+        {
+          paddingTop: insets.top,
+          paddingBottom: safeBottomInset,
+          paddingLeft: insets.left,
+          paddingRight: insets.right,
+        },
+      ]}>
       {currentRoute.name !== 'Home' ? (
         <View style={styles.header}>
           <Pressable onPress={goBack} style={styles.backButton}>
@@ -90,7 +124,11 @@ const AppNavigator = () => {
 
       <View style={styles.content}>
         {currentRoute.name === 'Home' ? (
-          <HomeTabs openMovie={openMovie} />
+          <HomeTabs
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            openMovie={openMovie}
+          />
         ) : null}
 
         {currentRoute.name === 'MovieDetails' ? (
@@ -127,12 +165,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#020617',
     borderBottomWidth: 1,
     borderColor: '#1e293b',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 10,
   },
   backButton: {
-    paddingVertical: 4,
-    paddingRight: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
   },
   backButtonText: {
     color: '#93c5fd',
@@ -154,8 +192,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#020617',
     borderTopWidth: 1,
     borderColor: '#1e293b',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+    paddingBottom: 14,
     gap: 10,
   },
   tab: {
