@@ -12,12 +12,12 @@ type Route =
   | { name: 'PostReview'; movieId: number; movieTitle: string };
 
 type HomeTabsProps = {
+  activeTab: 'popular' | 'search';
+  setActiveTab: (tab: 'popular' | 'search') => void;
   openMovie: (movieId: number) => void;
 };
 
-const HomeTabs = ({ openMovie }: HomeTabsProps) => {
-  const [activeTab, setActiveTab] = useState<'popular' | 'search'>('popular');
-
+const HomeTabs = ({ activeTab, setActiveTab, openMovie }: HomeTabsProps) => {
   return (
     <View style={styles.container}>
       <View style={styles.content}>
@@ -53,6 +53,7 @@ const HomeTabs = ({ openMovie }: HomeTabsProps) => {
 const AppNavigator = () => {
   const insets = useSafeAreaInsets();
   const [history, setHistory] = useState<Route[]>([{ name: 'Home' }]);
+  const [activeTab, setActiveTab] = useState<'popular' | 'search'>('popular');
 
   const currentRoute = history[history.length - 1];
   const safeBottomInset = Math.max(insets.bottom, 12);
@@ -61,19 +62,26 @@ const AppNavigator = () => {
     setHistory(current => (current.length > 1 ? current.slice(0, -1) : current));
   }, []);
 
-  const canGoBack = currentRoute.name !== 'Home';
+
+  const handleHardwareBack = useCallback(() => {
+    if (currentRoute.name !== 'Home') {
+      goBack();
+      return true;
+    }
+
+    if (activeTab !== 'popular') {
+      setActiveTab('popular');
+      return true;
+    }
+
+    return false;
+  }, [activeTab, currentRoute.name, goBack]);
 
   useEffect(() => {
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (canGoBack) {
-        goBack();
-        return true;
-      }
-      return false;
-    });
+    const subscription = BackHandler.addEventListener('hardwareBackPress', handleHardwareBack);
 
     return () => subscription.remove();
-  }, [canGoBack, goBack]);
+  }, [handleHardwareBack]);
 
   const openMovie = (movieId: number) => {
     setHistory(current => [...current, { name: 'MovieDetails', movieId }]);
@@ -116,7 +124,11 @@ const AppNavigator = () => {
 
       <View style={styles.content}>
         {currentRoute.name === 'Home' ? (
-          <HomeTabs openMovie={openMovie} />
+          <HomeTabs
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            openMovie={openMovie}
+          />
         ) : null}
 
         {currentRoute.name === 'MovieDetails' ? (
