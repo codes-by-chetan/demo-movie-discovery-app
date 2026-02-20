@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MovieDetailsScreen from '../screens/MovieDetailsScreen';
@@ -57,9 +57,15 @@ const AppNavigator = () => {
   const currentRoute = history[history.length - 1];
   const safeBottomInset = Math.max(insets.bottom, 12);
 
+  const goBack = useCallback(() => {
+    setHistory(current => (current.length > 1 ? current.slice(0, -1) : current));
+  }, []);
+
+  const canGoBack = currentRoute.name !== 'Home';
+
   useEffect(() => {
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      if (history.length > 1) {
+      if (canGoBack) {
         goBack();
         return true;
       }
@@ -67,11 +73,7 @@ const AppNavigator = () => {
     });
 
     return () => subscription.remove();
-  }, [history.length]);
-
-  const goBack = () => {
-    setHistory(current => (current.length > 1 ? current.slice(0, -1) : current));
-  };
+  }, [canGoBack, goBack]);
 
   const openMovie = (movieId: number) => {
     setHistory(current => [...current, { name: 'MovieDetails', movieId }]);
