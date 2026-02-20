@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, Pressable, StyleSheet, Text, View } from 'react-native';
+import { BackHandler, Platform, Pressable, StyleSheet, Text, ToastAndroid, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MovieDetailsScreen from '../screens/MovieDetailsScreen';
 import HomeScreen from '../screens/HomeScreen';
@@ -56,6 +56,7 @@ const AppNavigator = () => {
   const [activeTab, setActiveTab] = useState<'popular' | 'search'>('popular');
   const [tabHistory, setTabHistory] = useState<Array<'popular' | 'search'>>([]);
   const lastUiNavActionAt = useRef(0);
+  const lastBackPressAt = useRef(0);
 
   const currentRoute = history[history.length - 1];
   const safeBottomInset = Math.max(insets.bottom, 12);
@@ -90,8 +91,21 @@ const AppNavigator = () => {
 
     if (tabHistory.length > 0) {
       const previousTab = tabHistory[tabHistory.length - 1];
+      lastUiNavActionAt.current = Date.now();
       setTabHistory(current => current.slice(0, -1));
       setActiveTab(previousTab);
+      return true;
+    }
+
+    if (Platform.OS === 'android') {
+      const now = Date.now();
+      if (now - lastBackPressAt.current < 1500) {
+        BackHandler.exitApp();
+        return true;
+      }
+
+      lastBackPressAt.current = now;
+      ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
       return true;
     }
 
