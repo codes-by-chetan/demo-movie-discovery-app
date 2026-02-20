@@ -8,7 +8,6 @@ import {
 } from 'react-native';
 import MovieCard from '../components/MovieCard';
 import {usePaginatedMovies} from '../hooks/usePaginatedMovies';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { fetchPopularMovies } from '../services/tmdb-service';
 
 type Props = {
@@ -46,7 +45,7 @@ const PopularMoviesScreen = ({onMoviePress}: Props) => {
   }
 
   return (
-    <SafeAreaProvider style={styles.screen}>
+    <View style={styles.screen}>
       <FlatList
         data={movies}
         keyExtractor={item => item.id.toString()}
@@ -71,7 +70,7 @@ const PopularMoviesScreen = ({onMoviePress}: Props) => {
         }
       />
       {error ? <Text style={styles.error}>{error}</Text> : null}
-    </SafeAreaProvider>
+    </View>
   );
 };
 
